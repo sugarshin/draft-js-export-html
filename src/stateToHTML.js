@@ -70,7 +70,7 @@ function getTags(blockType: string): Array<string> {
     case BLOCK_TYPE.MEDIA:
       return ['figure'];
     default:
-      return ['p'];
+      return ['div'];
   }
 }
 
