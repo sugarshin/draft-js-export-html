@@ -4,10 +4,10 @@ import {Entity} from 'draft-js';
 import {
   getEntityRanges,
   BLOCK_TYPE, ENTITY_TYPE, INLINE_STYLE,
-} from 'draft-js-tools';
+} from 'draft-js-utils';
 
 import type {ContentState, ContentBlock, EntityInstance} from 'draft-js';
-import type {CharacterMetaList} from 'draft-js-tools';
+import type {CharacterMetaList} from 'draft-js-utils';
 
 type StringMap = {[key: string]: ?string};
 
