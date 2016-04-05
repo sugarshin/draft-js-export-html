@@ -11,7 +11,7 @@
     "test-src": "mocha"
   },
   "dependencies": {
-    "draft-js-tools": "^0.1.1"
+    "draft-js-utils": "^0.1.2"
   },
   "peerDependencies": {
     "draft-js": "^0.2.2"
