@@ -67,7 +67,7 @@ function getTags(blockType: string): Array<string> {
       return ['blockquote'];
     case BLOCK_TYPE.CODE:
       return ['pre', 'code'];
-    case BLOCK_TYPE.MEDIA:
+    case BLOCK_TYPE.ATOMIC:
       return ['figure'];
     default:
       return ['div'];
@@ -235,7 +235,7 @@ class MarkupGenerator {
           // block in a `<code>` so don't wrap inline code elements.
           content = (blockType === BLOCK_TYPE.CODE) ? content : `<code>${content}</code>`;
         }
-        if (blockType === BLOCK_TYPE.MEDIA) {
+        if (blockType === BLOCK_TYPE.ATOMIC) {
           content = `<img src=${content} alt=''/>`;
         }
         return content;
