@@ -11,7 +11,7 @@
     "test-src": "mocha"
   },
   "dependencies": {
-    "draft-js-utils": "^0.1.2"
+    "draft-js-utils": "github:sugarshin/draft-js-utils#1f0aee66ae99d589c1ab561dd32b8b8ae9ec3cd3"
   },
   "peerDependencies": {
     "draft-js": "^0.2.2"
