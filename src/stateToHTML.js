@@ -25,11 +25,25 @@ const BREAK = '<br/>';
 // Map entity data to element attributes.
 const ENTITY_ATTR_MAP = {
   [ENTITY_TYPE.LINK]: {url: 'href', rel: 'rel', target: 'target', title: 'title'},
+  [ENTITY_TYPE.IMAGE]: {src: 'src', alt: 'alt'},
 };
 
 // Map entity data to element attributes.
 const DATA_TO_ATTR = {
   [ENTITY_TYPE.LINK](entityType: string, entity: EntityInstance): StringMap {
+    let attrMap = ENTITY_ATTR_MAP.hasOwnProperty(entityType) ? ENTITY_ATTR_MAP[entityType] : {};
+    let data = entity.getData();
+    let attrs = {};
+    for (let dataKey of Object.keys(data)) {
+      let dataValue = data[dataKey];
+      if (attrMap.hasOwnProperty(dataKey)) {
+        let attrKey = attrMap[dataKey];
+        attrs[attrKey] = dataValue;
+      }
+    }
+    return attrs;
+  },
+  [ENTITY_TYPE.IMAGE](entityType: string, entity: EntityInstance): StringMap {
     let attrMap = ENTITY_ATTR_MAP.hasOwnProperty(entityType) ? ENTITY_ATTR_MAP[entityType] : {};
     let data = entity.getData();
     let attrs = {};
@@ -235,9 +249,6 @@ class MarkupGenerator {
           // block in a `<code>` so don't wrap inline code elements.
           content = (blockType === BLOCK_TYPE.CODE) ? content : `<code>${content}</code>`;
         }
-        if (blockType === BLOCK_TYPE.ATOMIC) {
-          content = `<img src=${content} alt=''/>`;
-        }
         return content;
       }).join('');
       let entity = entityKey ? Entity.get(entityKey) : null;
@@ -246,6 +257,10 @@ class MarkupGenerator {
         let attrs = DATA_TO_ATTR.hasOwnProperty(entityType) ? DATA_TO_ATTR[entityType](entityType, entity) : null;
         let strAttrs = stringifyAttrs(attrs);
         return `<a${strAttrs}>${content}</a>`;
+      } else if (entityType != null && entityType === ENTITY_TYPE.IMAGE) {
+        let attrs = DATA_TO_ATTR.hasOwnProperty(entityType) ? DATA_TO_ATTR[entityType](entityType, entity) : null;
+        let strAttrs = stringifyAttrs(attrs);
+        return `<img${strAttrs} />`;
       } else {
         return content;
       }
