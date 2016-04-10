@@ -25,7 +25,7 @@ const BREAK = '<br/>';
 // Map entity data to element attributes.
 const ENTITY_ATTR_MAP = {
   [ENTITY_TYPE.LINK]: {url: 'href', rel: 'rel', target: 'target', title: 'title'},
-  [ENTITY_TYPE.IMAGE]: {src: 'src', alt: 'alt'},
+  [ENTITY_TYPE.IMAGE]: {src: 'src', alt: 'alt', 'data-original-url': 'href'},
 };
 
 const dataToAttr = (entityType: string, entity: EntityInstance): StringMap => {
@@ -245,7 +245,7 @@ class MarkupGenerator {
       } else if (entityType === ENTITY_TYPE.IMAGE) {
         let attrs = dataToAttr(entityType, entity);
         let strAttrs = stringifyAttrs(attrs);
-        return `<a href="${attrs['data-original-url']}"><img src="${attrs.src}" alt="${attrs.alt}" /></a>`;
+        return `<a href="${attrs.href}"><img src="${attrs.src}" alt="${attrs.alt}" /></a>`;
       } else {
         return content;
       }
