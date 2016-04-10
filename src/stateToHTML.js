@@ -28,34 +28,18 @@ const ENTITY_ATTR_MAP = {
   [ENTITY_TYPE.IMAGE]: {src: 'src', alt: 'alt'},
 };
 
-// Map entity data to element attributes.
-const DATA_TO_ATTR = {
-  [ENTITY_TYPE.LINK](entityType: string, entity: EntityInstance): StringMap {
-    let attrMap = ENTITY_ATTR_MAP.hasOwnProperty(entityType) ? ENTITY_ATTR_MAP[entityType] : {};
-    let data = entity.getData();
-    let attrs = {};
-    for (let dataKey of Object.keys(data)) {
-      let dataValue = data[dataKey];
-      if (attrMap.hasOwnProperty(dataKey)) {
-        let attrKey = attrMap[dataKey];
-        attrs[attrKey] = dataValue;
-      }
+const dataToAttr = (entityType: string, entity: EntityInstance): StringMap => {
+  let attrMap = ENTITY_ATTR_MAP.hasOwnProperty(entityType) ? ENTITY_ATTR_MAP[entityType] : {};
+  let data = entity.getData();
+  let attrs = {};
+  for (let dataKey of Object.keys(data)) {
+    let dataValue = data[dataKey];
+    if (attrMap.hasOwnProperty(dataKey)) {
+      let attrKey = attrMap[dataKey];
+      attrs[attrKey] = dataValue;
     }
-    return attrs;
-  },
-  [ENTITY_TYPE.IMAGE](entityType: string, entity: EntityInstance): StringMap {
-    let attrMap = ENTITY_ATTR_MAP.hasOwnProperty(entityType) ? ENTITY_ATTR_MAP[entityType] : {};
-    let data = entity.getData();
-    let attrs = {};
-    for (let dataKey of Object.keys(data)) {
-      let dataValue = data[dataKey];
-      if (attrMap.hasOwnProperty(dataKey)) {
-        let attrKey = attrMap[dataKey];
-        attrs[attrKey] = dataValue;
-      }
-    }
-    return attrs;
-  },
+  }
+  return attrs;
 };
 
 // The reason this returns an array is because a single block might get wrapped
@@ -253,14 +237,15 @@ class MarkupGenerator {
       }).join('');
       let entity = entityKey ? Entity.get(entityKey) : null;
       let entityType = (entity == null) ? null : entity.getType();
-      if (entityType != null && entityType === ENTITY_TYPE.LINK) {
-        let attrs = DATA_TO_ATTR.hasOwnProperty(entityType) ? DATA_TO_ATTR[entityType](entityType, entity) : null;
+
+      if (entityType === ENTITY_TYPE.LINK) {
+        let attrs = dataToAttr(entityType, entity);
         let strAttrs = stringifyAttrs(attrs);
         return `<a${strAttrs}>${content}</a>`;
-      } else if (entityType != null && entityType === ENTITY_TYPE.IMAGE) {
-        let attrs = DATA_TO_ATTR.hasOwnProperty(entityType) ? DATA_TO_ATTR[entityType](entityType, entity) : null;
+      } else if (entityType === ENTITY_TYPE.IMAGE) {
+        let attrs = dataToAttr(entityType, entity);
         let strAttrs = stringifyAttrs(attrs);
-        return `<img${strAttrs} />`;
+        return `<a href="${attrs.alt}"><img src="${attrs.src}" /></a>`;
       } else {
         return content;
       }
