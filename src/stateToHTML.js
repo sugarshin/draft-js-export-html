@@ -245,7 +245,7 @@ class MarkupGenerator {
       } else if (entityType === ENTITY_TYPE.IMAGE) {
         let attrs = dataToAttr(entityType, entity);
         let strAttrs = stringifyAttrs(attrs);
-        return `<a href="${attrs.alt}"><img src="${attrs.src}" /></a>`;
+        return `<a href="${attrs['data-original-url']}"><img src="${attrs.src}" alt="${attrs.alt}" /></a>`;
       } else {
         return content;
       }
