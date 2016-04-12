@@ -10,6 +10,7 @@ import type {ContentState, ContentBlock, EntityInstance} from 'draft-js';
 import type {CharacterMetaList} from 'draft-js-utils';
 
 type StringMap = {[key: string]: ?string};
+type BoolMap = {[key: string]: ?boolean};
 
 const {
   BOLD,
@@ -60,6 +61,7 @@ function getTags(blockType: string): Array<string> {
       return ['h6'];
     case BLOCK_TYPE.UNORDERED_LIST_ITEM:
     case BLOCK_TYPE.ORDERED_LIST_ITEM:
+    case BLOCK_TYPE.CHECKABLE_LIST_ITEM:
       return ['li'];
     case BLOCK_TYPE.BLOCKQUOTE:
       return ['blockquote'];
@@ -75,6 +77,7 @@ function getTags(blockType: string): Array<string> {
 function getWrapperTag(blockType: string): ?string {
   switch (blockType) {
     case BLOCK_TYPE.UNORDERED_LIST_ITEM:
+    case BLOCK_TYPE.CHECKABLE_LIST_ITEM:
       return 'ul';
     case BLOCK_TYPE.ORDERED_LIST_ITEM:
       return 'ol';
@@ -91,9 +94,11 @@ class MarkupGenerator {
   output: Array<string>;
   totalBlocks: number;
   wrapperTag: ?string;
+  checkedStateMap: BoolMap
 
-  constructor(contentState: ContentState) {
+  constructor(contentState: ContentState, checkedStateMap: BoolMap) {
     this.contentState = contentState;
+    this.checkedStateMap = checkedStateMap;
   }
 
   generate(): string {
@@ -233,6 +238,10 @@ class MarkupGenerator {
           // block in a `<code>` so don't wrap inline code elements.
           content = (blockType === BLOCK_TYPE.CODE) ? content : `<code>${content}</code>`;
         }
+        if (blockType === BLOCK_TYPE.CHECKABLE_LIST_ITEM) {
+          const isChecked = this.checkedStateMap[block.getKey()];
+          content = `<input type="checkbox" ${(isChecked ? 'checked ' : '')}/>${content}`
+        }
         return content;
       }).join('');
       let entity = entityKey ? Entity.get(entityKey) : null;
@@ -289,6 +298,7 @@ function canHaveDepth(blockType: string): boolean {
   switch (blockType) {
     case BLOCK_TYPE.UNORDERED_LIST_ITEM:
     case BLOCK_TYPE.ORDERED_LIST_ITEM:
+    case BLOCK_TYPE.CHECKABLE_LIST_ITEM:
       return true;
     default:
       return false;
@@ -312,6 +322,6 @@ function encodeAttr(text: string): string {
     .split('"').join('&quot;');
 }
 
-export default function stateToHTML(content: ContentState): string {
-  return new MarkupGenerator(content).generate();
+export default function stateToHTML(content: ContentState, checkedStateMap: BoolMap): string {
+  return new MarkupGenerator(content, checkedStateMap).generate();
 }
