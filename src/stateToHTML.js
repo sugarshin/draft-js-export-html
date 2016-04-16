@@ -29,6 +29,28 @@ const ENTITY_ATTR_MAP = {
   [ENTITY_TYPE.IMAGE]: {src: 'src', alt: 'alt', 'data-original-url': 'href'},
 };
 
+const COLOR_STYLE_MAP = {
+  TEXT_DEFAULT: { color: '#878787' },
+  TEXT_WHITE: { color: '#fff' },
+  TEXT_BLACK: { color: '#000' },
+  TEXT_RED: { color: 'rgba(255, 0, 0, 1.0)' },
+  TEXT_ORANGE: { color: 'rgba(255, 127, 0, 1.0)' },
+  TEXT_YELLOW: { color: 'rgba(180, 180, 0, 1.0)' },
+  TEXT_GREEN: { color: 'rgba(0, 180, 0, 1.0)' },
+  TEXT_BLUE: { color: 'rgba(0, 0, 255, 1.0)' },
+  TEXT_INDIGO: { color: 'rgba(75, 0, 130, 1.0)' },
+  TEXT_VIOLET: { color: 'rgba(127, 0, 255, 1.0)' },
+  BACKGROUND_DEFAULT: { backgroundColor: '#fff' },
+  BACKGROUND_BLACK: { backgroundColor: '#000' },
+  BACKGROUND_RED: { backgroundColor: 'rgba(255, 0, 0, 1.0)' },
+  BACKGROUND_ORANGE: { backgroundColor: 'rgba(255, 127, 0, 1.0)' },
+  BACKGROUND_YELLOW: { backgroundColor: 'rgba(180, 180, 0, 1.0)' },
+  BACKGROUND_GREEN: { backgroundColor: 'rgba(0, 180, 0, 1.0)' },
+  BACKGROUND_BLUE: { backgroundColor: 'rgba(0, 0, 255, 1.0)' },
+  BACKGROUND_INDIGO: { backgroundColor: 'rgba(75, 0, 130, 1.0)' },
+  BACKGROUND_VIOLET: { backgroundColor: 'rgba(127, 0, 255, 1.0)' }
+};
+
 const dataToAttr = (entityType: string, entity: EntityInstance): StringMap => {
   let attrMap = ENTITY_ATTR_MAP.hasOwnProperty(entityType) ? ENTITY_ATTR_MAP[entityType] : {};
   let data = entity.getData();
@@ -41,6 +63,17 @@ const dataToAttr = (entityType: string, entity: EntityInstance): StringMap => {
     }
   }
   return attrs;
+};
+
+const decamelize = (str, sep) => {
+  if (typeof str !== 'string') {
+    throw new TypeError('Expected a string');
+  }
+  sep = typeof sep === 'undefined' ? '_' : sep;
+  return str
+    .replace(/([a-z\d])([A-Z])/g, '$1' + sep + '$2')
+    .replace(/([A-Z]+)([A-Z][a-z\d]+)/g, '$1' + sep + '$2')
+    .toLowerCase();
 };
 
 // The reason this returns an array is because a single block might get wrapped
@@ -220,6 +253,20 @@ class MarkupGenerator {
     return entityPieces.map(([entityKey, stylePieces]) => {
       let content = stylePieces.map(([text, style]) => {
         let content = encodeContent(text);
+
+        const includedLabels = Object.keys(COLOR_STYLE_MAP).filter(label => !!style.get(label));
+        if (includedLabels.length > 0) {
+          let styles = {};
+          styles = includedLabels.reduce((result, label) => {
+            return Object.assign(result, COLOR_STYLE_MAP[label]); // TODO: Object.assign
+          }, styles);
+
+          const stringifyStyles = Object.keys(styles).map(prop => {
+            return `${decamelize(prop, '-')}: ${styles[prop]};`;
+          }).join(' ');
+          content = `<span style="${stringifyStyles}">${content}</span>`;
+        }
+
         // These are reverse alphabetical by tag name.
         if (style.has(BOLD)) {
           content = `<strong>${content}</strong>`;
