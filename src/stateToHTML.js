@@ -29,26 +29,35 @@ const ENTITY_ATTR_MAP = {
   [ENTITY_TYPE.IMAGE]: {src: 'src', alt: 'alt', 'data-original-url': 'href'},
 };
 
-const COLOR_STYLE_MAP = {
-  TEXT_DEFAULT: { color: '#878787' },
-  TEXT_WHITE: { color: '#fff' },
-  TEXT_BLACK: { color: '#000' },
-  TEXT_RED: { color: 'rgb(255, 0, 0)' },
-  TEXT_ORANGE: { color: 'rgb(255, 127, 0)' },
-  TEXT_YELLOW: { color: 'rgb(180, 180, 0)' },
-  TEXT_GREEN: { color: 'rgb(0, 180, 0)' },
-  TEXT_BLUE: { color: 'rgb(0, 0, 255)' },
-  TEXT_INDIGO: { color: 'rgb(75, 0, 130)' },
-  TEXT_VIOLET: { color: 'rgb(127, 0, 255)' },
-  BACKGROUND_DEFAULT: { backgroundColor: '#fff' },
-  BACKGROUND_BLACK: { backgroundColor: '#000' },
-  BACKGROUND_RED: { backgroundColor: 'rgb(255, 0, 0)' },
-  BACKGROUND_ORANGE: { backgroundColor: 'rgb(255, 127, 0)' },
-  BACKGROUND_YELLOW: { backgroundColor: 'rgb(180, 180, 0)' },
-  BACKGROUND_GREEN: { backgroundColor: 'rgb(0, 180, 0)' },
-  BACKGROUND_BLUE: { backgroundColor: 'rgb(0, 0, 255)' },
-  BACKGROUND_INDIGO: { backgroundColor: 'rgb(75, 0, 130)' },
-  BACKGROUND_VIOLET: { backgroundColor: 'rgb(127, 0, 255)' }
+const OLD_COLORS = [
+  'rgb(0, 0, 0)', 'rgb(230, 0, 0)', 'rgb(255, 153, 0)', 'rgb(255, 255, 0)',
+  'rgb(0, 138, 0)', 'rgb(0, 102, 204)', 'rgb(153, 51, 255)', 'rgb(255, 255, 255)',
+  'rgb(250, 204, 204)', 'rgb(255, 235, 204)', 'rgb(255, 255, 204)', 'rgb(204, 232, 204)',
+  'rgb(204, 224, 245)', 'rgb(235, 214, 255)', 'rgb(187, 187, 187)', 'rgb(240, 102, 102)',
+  'rgb(255, 194, 102)', 'rgb(255, 255, 102)', 'rgb(102, 185, 102)', 'rgb(102, 163, 224)',
+  'rgb(194, 133, 255)', 'rgb(136, 136, 136)', 'rgb(161, 0, 0)', 'rgb(178, 107, 0)',
+  'rgb(178, 178, 0)', 'rgb(0, 97, 0)', 'rgb(0, 71, 178)', 'rgb(107, 36, 178)',
+  'rgb(68, 68, 68)', 'rgb(92, 0, 0)', 'rgb(102, 61, 0)', 'rgb(102, 102, 0)',
+  'rgb(0, 55, 0)', 'rgb(0, 41, 102)', 'rgb(61, 20, 10)'
+];
+
+const OLD_INLINE_STYLES_SIZE = {
+  SIZE_NORMAL: { fontSize: 13 },
+  SIZE_SMALLER: { fontSize: 10 },
+  SIZE_LARGER: { fontSize: 24 },
+  SIZE_HUGE: { fontSize: 32 }
+};
+
+const OLD_INLINE_STYLES = OLD_COLORS.reduce((result, color, i) => {
+  result[`COLOR${i}`] = { color };
+  result[`BACKGROUND_COLOR${i}`] = { backgroundColor: color };
+  return result;
+}, OLD_INLINE_STYLES_SIZE);
+
+const OLD_BLOCK_TYPES = {
+  ALIGN_CENTER: 'align-center',
+  ALIGN_RIGHT: 'align-right',
+  ALIGN_JUSTIFY: 'align-justify'
 };
 
 const dataToAttr = (entityType: string, entity: EntityInstance): StringMap => {
@@ -203,7 +212,15 @@ class MarkupGenerator {
   writeStartTag(blockType) {
     let tags = getTags(blockType);
     for (let tag of tags) {
-      this.output.push(`<${tag}>`);
+      if (blockType === OLD_BLOCK_TYPES.ALIGN_RIGHT) {
+        this.output.push(`<${tag} style="text-align: right;">`);
+      } else if (blockType === OLD_BLOCK_TYPES.ALIGN_CENTER) {
+        this.output.push(`<${tag} style="text-align: center;">`);
+      } else if (blockType === OLD_BLOCK_TYPES.ALIGN_JUSTIFY) {
+        this.output.push(`<${tag} style="text-align: justify;">`);
+      } else {
+        this.output.push(`<${tag}>`);
+      }
     }
   }
 
@@ -254,15 +271,18 @@ class MarkupGenerator {
       let content = stylePieces.map(([text, style]) => {
         let content = encodeContent(text);
 
-        const includedLabels = Object.keys(COLOR_STYLE_MAP).filter(label => !!style.get(label));
-        if (includedLabels.length > 0) {
-          let styles = {};
-          styles = includedLabels.reduce((result, label) => {
-            return Object.assign(result, COLOR_STYLE_MAP[label]); // TODO: Object.assign
-          }, styles);
-
+        const oldStyles = style.toArray()
+          .filter(style => Object.keys(OLD_INLINE_STYLES).indexOf(style) !== -1);
+        if (oldStyles.length > 0) {
+          const styles = oldStyles.reduce((result, style) => {
+            return Object.keys(OLD_INLINE_STYLES[style]).reduce((r, prop) => {
+              r[prop] = OLD_INLINE_STYLES[style][prop];
+              return r;
+            }, result);
+          }, {});
           const stringifyStyles = Object.keys(styles).map(prop => {
-            return `${decamelize(prop, '-')}: ${styles[prop]};`;
+            const val = prop === 'fontSize' ? `${styles[prop]}px` : styles[prop];
+            return `${decamelize(prop, '-')}: ${val};`;
           }).join(' ');
           content = `<span style="${stringifyStyles}">${content}</span>`;
         }
@@ -287,7 +307,7 @@ class MarkupGenerator {
         }
         if (blockType === BLOCK_TYPE.CHECKABLE_LIST_ITEM) {
           const isChecked = this.checkedStateMap[block.getKey()];
-          content = `<input type="checkbox" ${(isChecked ? 'checked ' : '')}/>${content}`
+          content = `<input type="checkbox" ${(isChecked ? 'checked ' : '')}/>${content}`;
         }
         return content;
       }).join('');
